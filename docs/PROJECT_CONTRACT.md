@@ -808,6 +808,45 @@ Measurable retrieval/generation quality and structured logging (roadmap
 Replace Module 0's placeholder page with the real chat UI (roadmap
 §41-43).
 
+#### Interface decisions
+
+* No user-registration/login module exists (none of Modules 0-6 built
+  one). Added `POST /auth/demo-login` (`backend/app/api/auth.py`): given
+  a role, mints a token for a fixed demo user of that role, no
+  credentials. Clearly documented in its own docstring as a portfolio-only
+  mechanism, never a pattern for real deployment. The frontend's
+  `RoleSelector` calls it instead of a real sign-in form.
+* `POST /feedback` (`backend/app/api/feedback.py`) has no persistence
+  layer to write to (no Postgres/ORM module exists) — it records
+  feedback as a structured log event, the same mechanism Module 6 uses
+  for chat requests, rather than introducing a database dependency out
+  of scope for this module.
+* CORS middleware added to `backend/app/main.py` (dev-friendly default:
+  `http://localhost:3000`) — needed once a real browser client exists.
+* Conversation history and the demo session (role + token) are both
+  stored in `sessionStorage` (`frontend/src/lib/storage.ts`), per
+  roadmap §42's "initial version" guidance.
+* **Bug found and fixed during manual verification**: an initial
+  implementation used a separate "load messages on mount" effect plus a
+  "save messages on change" effect; React Strict Mode's dev-mode double
+  effect invocation exposed a real race where the save effect's first
+  run captured the pre-load `[]` closure and overwrote real
+  `sessionStorage` history with an empty array before the load effect's
+  state update landed. Fixed by using a lazy `useState` initializer
+  (`useState(() => loadMessages())`) instead of a separate load effect,
+  which is safe here specifically because `ChatWindow` only ever mounts
+  client-side, after `page.tsx` has already confirmed a session exists
+  (never during SSR) — see the comment in `ChatWindow.tsx`.
+* **Manually verified end-to-end with a real local LLM**, not just
+  mocks: installed Ollama (`brew install ollama`), pulled `llama3.2`,
+  and drove the actual running app in a browser — real Qdrant retrieval,
+  real local generation, real citation/grounding verification, a
+  correctly-refused answer when the small model's response didn't meet
+  the grounding bar, correctly-grounded cited answers with clickable
+  sources on other queries, working feedback buttons (confirmed via the
+  backend's structured log), and confirmed conversation history now
+  survives a page refresh after the fix above.
+
 #### Acceptance criteria
 
 1. Chat interface: message list, input box, source citations (roadmap

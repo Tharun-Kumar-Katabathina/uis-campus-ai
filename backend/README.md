@@ -101,6 +101,12 @@ refuses to sign with an empty key) rather than silently signing tokens
 with a weak fallback. Set a real value (32+ bytes recommended) in `.env`
 for local/dev use; tests set their own via `tests/conftest.py`.
 
+**`POST /auth/demo-login`** (Module 7): `{"role": "student"}` →
+`{"access_token": "...", "role": "student"}`. No real user accounts
+exist (no registration/login module is in scope) — this mints a token
+for a fixed demo user of the given role. See its docstring in
+`app/api/auth.py`; never use this pattern for a real deployment.
+
 ## Generation & verification (Module 5)
 
 ```text
@@ -173,6 +179,12 @@ Langfuse or CloudWatch is a documented follow-on (roadmap §35), not
 required for this project's current scope. See
 `evaluation/README.md` for how retrieval/generation *quality* (as
 opposed to per-request logs) is measured and gated in CI.
+
+**`POST /feedback`** (Module 7, requires auth): `{"conversation_id",
+"question", "answer", "helpful", "comment"}` → `{"status": "ok"}`. No
+feedback table exists (no Postgres/ORM module is in scope) — this logs a
+`"feedback"` structured event the same way, rather than adding a
+database dependency for this module.
 
 ## Development
 

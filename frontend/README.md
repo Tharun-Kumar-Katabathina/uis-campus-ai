@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend
 
-## Getting Started
+The chat UI (Module 7) — Next.js, TypeScript, Tailwind CSS. See
+`docs/PROJECT_CONTRACT.md` for the full module contract.
 
-First, run the development server:
+## What it looks like
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```text
++-------------------------------------------------+
+| UIS CampusAI                          Switch role|
+| Signed in as student                             |
+|---------------------------------------------------|
+|                                                   |
+|                     When does fall registration   |
+|                     open?                    [you]|
+|                                                   |
+| [assistant] According to the available evidence,  |
+| fall registration opens on July 6, 2026, for       |
+| continuing students and July 20, 2026, for new     |
+| and transfer students [2].                         |
+|                                                     |
+| Sources                                            |
+| 2026-2027 Academic Calendar (link)                 |
+|                                                     |
+| Was this helpful? 👍 👎                             |
+|                                                     |
+|---------------------------------------------------|
+| Ask a question...                          [Send] |
++-------------------------------------------------+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No login form: click a role (Student/Faculty/Staff/Admin) to get a demo
+token from the backend (`POST /auth/demo-login` — see its docstring;
+there's no real user-account system in this project). Then it's a plain
+chat: type a question, get an answer with clickable sources and a
+verified/unverified state baked into whether an answer or the roadmap
+§28 refusal comes back, and thumbs up/down feedback under each answer.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app/page.tsx` — top-level: restores a session from
+  `sessionStorage` if one exists, otherwise shows `RoleSelector`; once
+  signed in, renders `ChatWindow`.
+- `src/components/RoleSelector.tsx` — the 4 role buttons; calls
+  `demoLogin()`.
+- `src/components/ChatWindow.tsx` — message list + input; calls
+  `sendChatMessage()` per question and `sendFeedback()` per thumbs
+  click; persists messages to `sessionStorage` on every change.
+- `src/components/MessageBubble.tsx` — renders one message: content,
+  sources as links (assistant only), feedback buttons (assistant only,
+  disabled once clicked).
+- `src/lib/api.ts` — typed fetch wrappers for `/auth/demo-login`,
+  `/chat`, `/feedback` (`NEXT_PUBLIC_API_URL`, defaults to
+  `http://localhost:8000`).
+- `src/lib/storage.ts` — `sessionStorage` helpers, wrapped in try/catch.
 
-## Learn More
+## Manual end-to-end verification
 
-To learn more about Next.js, take a look at the following resources:
+This was actually driven in a browser against the real stack, not just
+component tests against mocks: Qdrant populated via `ingestion/`'s
+pipeline, the real backend (`uvicorn`), and a real local LLM (Ollama +
+`llama3.2`, installed just for this check — see
+`docs/PROJECT_CONTRACT.md` Module 7's interface decisions for what that
+surfaced, including a real conversation-history race condition it caught
+and the fix). Ollama isn't a project dependency and isn't installed by
+default — `backend/README.md`'s Module 5 section has the manual setup if
+you want to reproduce this.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm install
+npm run dev            # http://localhost:3000 (needs the backend running too)
+npm run test           # Vitest + React Testing Library, mocks lib/api — no backend needed
+npm run lint            # eslint
+npm run format:check    # prettier check
+npm run build            # production build
+```

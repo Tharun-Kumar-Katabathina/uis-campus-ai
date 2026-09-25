@@ -11,16 +11,16 @@ contract this codebase is built against.
 
 ## Status
 
-**Modules 0-6 complete:** Project Foundation, Ingestion Pipeline,
+**Modules 0-7 complete:** Project Foundation, Ingestion Pipeline,
 Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM Generation &
-Citation Verification, and Evaluation & Observability. `POST /chat` is a
-working, role-filtered, grounded, cited, source-backed, logged chat
-endpoint, with a CI-gated evaluation harness proving retrieval and
-verification quality on every push — minus a real UI (still the Module 0
-placeholder page) and a locally running LLM to actually call (Ollama
-isn't installed in this dev environment; the endpoint is fully tested
-against a stubbed LLM client). See `docs/PROJECT_CONTRACT.md` §11 for
-what's next.
+Citation Verification, Evaluation & Observability, and the Frontend Chat
+UI. There's a real, working chat interface — pick a role, ask a
+question, get a grounded/cited/role-filtered answer with sources and
+feedback buttons — backed by a CI-gated evaluation harness. Verified
+end-to-end in a real browser against a real local LLM (Ollama +
+llama3.2, not installed by default — see `frontend/README.md`). Only
+Scheduled Ingestion (turning the manual pipeline into a recurring job) is
+left — see `docs/PROJECT_CONTRACT.md` §11.
 
 ## Stack
 
@@ -76,8 +76,11 @@ curl http://localhost:8000/health
 # {"status":"ok"}
 ```
 
-Open http://localhost:3000 and you should see the UIS CampusAI placeholder
-page.
+Open http://localhost:3000 — pick a role (no account needed) and ask a
+question. Note: without a running Ollama instance (see
+`frontend/README.md`), `/chat` will error on the LLM call; everything up
+through retrieval still works, and the frontend's own tests mock the LLM
+entirely so `npm run test` doesn't need it either.
 
 ## Development
 
@@ -96,10 +99,14 @@ run the retrieval-quality benchmark.
 Frontend (from `frontend/`):
 
 ```bash
-npm run lint          # eslint
-npm run format:check  # prettier check
-npm run build          # production build
+npm run test           # Vitest + React Testing Library (mocks the backend)
+npm run lint            # eslint
+npm run format:check    # prettier check
+npm run build             # production build
 ```
+
+See [`frontend/README.md`](frontend/README.md) for the chat UI's
+architecture and how it was manually verified end-to-end.
 
 Ingestion (from `ingestion/`):
 
