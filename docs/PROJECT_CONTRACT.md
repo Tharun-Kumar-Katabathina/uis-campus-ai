@@ -886,7 +886,11 @@ Turn Module 1's manual pipeline into a recurring, automated job (roadmap
   zero — catching a silent failure (e.g. an empty/malformed manifest)
   that would otherwise leave every step green.
 * AC3 was verified by actually dispatching the workflow twice via
-  `gh workflow run` / `gh run watch`, not just written and left untested:
+  `gh workflow run` / `gh run watch`, not just written and left untested
+  (runs
+  [36108344752](https://github.com/Tharun-Kumar-Katabathina/uis-campus-ai/actions/runs/36108344752)
+  and
+  [36108411000](https://github.com/Tharun-Kumar-Katabathina/uis-campus-ai/actions/runs/36108411000)):
   both runs succeeded with the same final point count (5), demonstrating
   idempotent upsert (Module 2's UUID5-of-chunk_id point IDs) holds across
   separate real workflow invocations, not just in unit tests.
