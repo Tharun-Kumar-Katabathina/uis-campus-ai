@@ -2,9 +2,10 @@
 
 > This is the shared project contract referenced by `CLAUDE.md`. Every Claude Code
 > session working on this repo should read this file before making changes.
-> **Note:** this document is truncated at the end of Module 0's acceptance
-> criteria in the source it was authored from — Modules 1+ are not yet defined.
-> Append them here as they're written so this stays the single source of truth.
+> Modules 0-8 are fully defined in §11 below. Acceptance criteria for a module
+> already in progress may still be refined with interface decisions as it's
+> built (see Module 1/2's "Interface decision" notes) — keep this file updated
+> so it stays the single source of truth.
 
 ## 1. Objective
 
@@ -553,9 +554,199 @@ already treats it as a separate top-level directory.
 
 ---
 
-### MODULE 2+ — Not yet defined
+### MODULE 2 — Embedding & Vector Search
 
-> Add the remaining modules here (suggested from §1's requirement list:
-> Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM Generation &
-> Citation Verification, Evaluation & Observability, Frontend, Scheduled
-> Ingestion) before starting parallel development per §9.
+#### Goal
+
+Generate real semantic embeddings for Module 1's chunk output and make
+them queryable (roadmap §17, §21-22).
+
+#### Interface decisions
+
+* Embedding + indexing extends the offline `ingestion/` pipeline (it
+  continues extract→clean→chunk→metadata with →embed→index, matching
+  roadmap §17's single pipeline diagram), rather than being a new
+  top-level package.
+* Embedding library: **fastembed** (ONNX-based, ships with `qdrant-client`
+  integration, no torch dependency) running a small local model — real
+  local semantic embeddings per `EMBEDDING_PROVIDER=local`, lighter than
+  raw sentence-transformers.
+* Vector DB: Qdrant (already in `docker-compose.yml`). Tests use
+  `qdrant-client`'s in-memory mode (`location=":memory:"`) — no live
+  service or Docker required in CI.
+* Deviation from Modules 0-1: unlike those modules, this module's
+  real-embedding integration test needs network access once, to download
+  the ONNX model — cached in CI via `actions/cache`. Pure ranking/filter
+  logic stays covered by fast, network-free unit tests using a stub
+  `Embedder`.
+
+#### Acceptance criteria
+
+1. `ingestion/ingestion/embedder.py` — an `Embedder` protocol plus a
+   `FastEmbedEmbedder` implementation.
+2. `ingestion/ingestion/vector_store.py` — Qdrant client wrapper:
+   create-collection-if-missing, upsert by `chunk_id` (idempotent — rerun
+   produces no duplicate points).
+3. Pipeline extended (or a new `ingestion/ingestion/index.py`) to read
+   `output/chunks.jsonl`, embed, and upsert into Qdrant.
+4. `backend/app/retrieval/vector_search.py` — `semantic_search(query,
+   top_k, filters)` embeds the query and returns scored results with
+   metadata + content, supporting metadata filters (e.g. `document_type`,
+   `access_level`).
+5. Unit tests for ranking/filtering use a deterministic stub `Embedder`
+   (no network).
+6. One integration test uses the real `FastEmbedEmbedder` + in-memory
+   Qdrant to index sample chunks and assert a semantically relevant query
+   ranks the right chunk first.
+7. `poetry run pytest`, `ruff check`, `black --check` pass in both
+   `ingestion/` and `backend/`.
+8. README documents the embedding model choice and how to index/query.
+
+---
+
+### MODULE 3 — Hybrid Retrieval
+
+#### Goal
+
+Combine semantic search with keyword search, metadata filtering, and
+reranking into one retrieval function; add query classification (roadmap
+§10-14, §24-25).
+
+#### Acceptance criteria
+
+1. `backend/app/retrieval/keyword_search.py` — BM25 over chunk content
+   (pure-Python `rank_bm25` or equivalent, no network).
+2. `backend/app/retrieval/hybrid.py` — `hybrid_search(query, top_k,
+   filters)` merges semantic + keyword candidates (e.g. reciprocal rank
+   fusion) before reranking.
+3. `backend/app/retrieval/reranker.py` — reranks the merged candidate set;
+   uses a lightweight local reranker if one fits without heavy new
+   dependencies, otherwise a documented scoring combination.
+4. `backend/app/retrieval/query_classifier.py` — rule/keyword-based
+   classification into roadmap §10's intents (no LLM call — that's Module
+   5).
+5. Retrieval quality measured with Recall@K/MRR against a small
+   hand-labeled query→expected-chunk set built from Module 1's sample
+   sources — a test asserts a minimum threshold.
+6. Tests, lint, format pass with no network required.
+7. README documents the retrieval architecture and how to evaluate it.
+
+---
+
+### MODULE 4 — RBAC (Role-Based Access Control)
+
+#### Goal
+
+Enforce roadmap §9's role-based document filtering end-to-end.
+
+#### Acceptance criteria
+
+1. `backend/app/core/auth.py` — JWT issue/verify with a `role` claim
+   (student/faculty/staff/admin), using `JWT_SECRET`.
+2. `backend/app/models/` — minimal `User` model + role enum.
+3. `hybrid_search` (Module 3) accepts `roles: list[str]` and filters out
+   any chunk the requester's role doesn't satisfy — a test proves a
+   student-role query never returns a staff-only chunk even when it's the
+   best semantic match.
+4. A FastAPI dependency (`get_current_user`) rejects unauthenticated/
+   invalid-token requests with 401.
+5. Tests, lint, format pass.
+6. README documents the auth model and role→access_level mapping.
+
+---
+
+### MODULE 5 — LLM Generation & Citation Verification
+
+#### Goal
+
+Wire retrieval into an LLM for grounded, cited answers, verified before
+returning to the user (roadmap §23, §26-28, §33).
+
+#### Acceptance criteria
+
+1. `backend/app/generation/llm_client.py` — provider-abstracted LLM
+   client (`LLM_PROVIDER=local` via Ollama, or an API provider) behind one
+   interface.
+2. `backend/app/generation/prompt.py` — system prompt enforcing roadmap
+   §23's grounding rules and §33's prompt-injection defense (retrieved
+   content is data, never instructions).
+3. `backend/app/verification/grounding.py` (claims are supported by
+   evidence) and `backend/app/verification/citations.py` (every citation
+   maps to an actually-retrieved chunk, no fabricated citations).
+4. No-answer behavior: insufficient evidence returns the roadmap §28
+   refusal instead of a fabricated answer — covered by a test with an
+   out-of-scope sample question.
+5. `POST /chat` wires classification → retrieval → generation →
+   verification → response with sources, matching roadmap §45's shape.
+6. Prompt-injection test: a chunk containing an embedded "ignore previous
+   instructions" string must not change model behavior.
+7. Tests use a stubbed/mocked LLM client so CI stays network-free and
+   deterministic; a documented manual path covers running against a real
+   local Ollama model.
+8. README documents the chat endpoint and its request/response shape.
+
+---
+
+### MODULE 6 — Evaluation & Observability
+
+#### Goal
+
+Measurable retrieval/generation quality and structured logging (roadmap
+§35-40).
+
+#### Acceptance criteria
+
+1. `evaluation/datasets/` — eval question set (extends Module 3's set
+   toward the roadmap's 50-100 question target; spans categories,
+   including no-answer/ambiguous cases).
+2. `evaluation/evaluate.py` — computes Recall@K, Precision@K, MRR, Hit
+   Rate (retrieval) and faithfulness/citation-correctness/abstention
+   quality (generation, via Module 5's verification checks); outputs a
+   report.
+3. Backend structured logging (query, intent, retrieved doc ids + scores,
+   latency, verification result); a real observability backend (e.g.
+   Langfuse) is documented as a follow-on, not a hard dependency.
+4. CI runs the evaluation suite against the sample corpus and fails the
+   build if scores regress below a defined floor.
+5. README documents how to run evaluation and read the report.
+
+---
+
+### MODULE 7 — Frontend (Chat UI)
+
+#### Goal
+
+Replace Module 0's placeholder page with the real chat UI (roadmap
+§41-43).
+
+#### Acceptance criteria
+
+1. Chat interface: message list, input box, source citations (roadmap
+   §41 mockup), thumbs up/down feedback (§40).
+2. Calls the backend's `/chat` endpoint (Module 5); streaming is a bonus,
+   single-shot request/response is acceptable for this module.
+3. `POST /feedback` wired from the UI to a backend endpoint that records
+   it.
+4. Conversation history stored client-side (session-based) per roadmap
+   §42's "initial version" guidance.
+5. Component tests for the chat flow; lint, format, build pass.
+6. README/screenshots document the UI.
+
+---
+
+### MODULE 8 — Scheduled Ingestion
+
+#### Goal
+
+Turn Module 1's manual pipeline into a recurring, automated job (roadmap
+§31).
+
+#### Acceptance criteria
+
+1. A scheduled GitHub Actions workflow runs ingestion (Module 1) +
+   embedding/indexing (Module 2) on a cron schedule.
+2. The workflow fails visibly (and is easy to notice) if the pipeline
+   errors.
+3. A live scheduled run demonstrates idempotency (relies on Module 1's
+   already-tested change detection).
+4. README documents the schedule and how to trigger it manually.
