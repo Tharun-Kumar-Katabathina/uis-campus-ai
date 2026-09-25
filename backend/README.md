@@ -63,6 +63,43 @@ Module 2 already requires). Every other retrieval test (`test_hybrid.py`,
 `test_keyword_search.py`, `test_reranker.py`, `test_query_classifier.py`)
 is network-free, using a deterministic stub embedder.
 
+## Authentication & RBAC (Module 4)
+
+Auth is JWT-based (`app/core/auth.py`), HS256, signed with `JWT_SECRET`.
+A token carries `sub` (user id) and `role`. There is no user registration
+or login endpoint yet — `create_access_token(user_id, role)` is how a
+future auth flow (or a manual script) would issue one; for now it's
+exercised directly by tests and can be used to mint a token for manual
+API testing:
+
+```bash
+poetry run python -c "
+from app.core.auth import create_access_token
+from app.models.user import Role
+print(create_access_token('demo-user', Role.STAFF))
+"
+```
+
+`GET /me` is the first protected route — send the token as
+`Authorization: Bearer <token>`; without a valid one it returns 401.
+
+**Role → access_level mapping** (`app/retrieval/access_control.py`):
+
+| access_level | student | faculty | staff | admin |
+|---|---|---|---|---|
+| `public`     | ✅ | ✅ | ✅ | ✅ |
+| `authorized` | ❌ | ✅ | ✅ | ✅ |
+| `restricted` | ❌ | ❌ | ❌ | ❌ (never ingested — see Module 1) |
+
+`hybrid_search(..., roles=[user.role.value])` filters the fused candidate
+list against this table before reranking, so a higher-scoring disallowed
+chunk can never push out a permitted one.
+
+`JWT_SECRET` has no default — an unset/empty secret fails loudly (PyJWT
+refuses to sign with an empty key) rather than silently signing tokens
+with a weak fallback. Set a real value (32+ bytes recommended) in `.env`
+for local/dev use; tests set their own via `tests/conftest.py`.
+
 ## Development
 
 ```bash

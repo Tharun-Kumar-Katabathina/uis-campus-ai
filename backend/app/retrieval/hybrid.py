@@ -1,5 +1,6 @@
 from qdrant_client import QdrantClient
 
+from app.retrieval.access_control import filter_by_role
 from app.retrieval.keyword_search import KeywordIndex
 from app.retrieval.reranker import rerank
 from app.retrieval.vector_search import Embedder, SearchResult, semantic_search
@@ -26,6 +27,7 @@ def hybrid_search(
     query: str,
     top_k: int = 5,
     filters: dict[str, str] | None = None,
+    roles: list[str] | None = None,
     keyword_index: KeywordIndex | None = None,
     embedder: Embedder | None = None,
     client: QdrantClient | None = None,
@@ -33,7 +35,12 @@ def hybrid_search(
     """Combines semantic search (Module 2) with BM25 keyword search via
     reciprocal rank fusion, then reranks the fused candidates. `top_k` is
     the final result count; each underlying search pulls a wider
-    candidate set so fusion has enough to work with."""
+    candidate set so fusion has enough to work with.
+
+    `roles` (Module 4 RBAC): when given, any candidate whose access_level
+    none of these roles satisfies is dropped before reranking/truncation
+    — a restricted document can never displace a permitted one into the
+    top_k just because it scored higher."""
     candidate_pool = max(top_k * 3, 10)
 
     semantic_results = semantic_search(
@@ -44,4 +51,6 @@ def hybrid_search(
     )
 
     fused = reciprocal_rank_fusion([semantic_results, keyword_results])
+    if roles is not None:
+        fused = filter_by_role(fused, roles)
     return rerank(query, fused)[:top_k]

@@ -11,12 +11,11 @@ contract this codebase is built against.
 
 ## Status
 
-**Modules 0-3 complete:** Project Foundation, Ingestion Pipeline,
-Embedding & Vector Search, and Hybrid Retrieval. Queries get classified,
-searched (semantic + BM25 keyword, fused and reranked), and evaluated for
-retrieval quality — but there's no RBAC or LLM generation/chat yet, so
-nothing is exposed over an API endpoint. See `docs/PROJECT_CONTRACT.md`
-§11 for what's next.
+**Modules 0-4 complete:** Project Foundation, Ingestion Pipeline,
+Embedding & Vector Search, Hybrid Retrieval, and RBAC. Retrieval is
+role-filtered end-to-end and JWT auth protects a first route (`GET
+/me`) — but there's no LLM generation/chat endpoint yet. See
+`docs/PROJECT_CONTRACT.md` §11 for what's next.
 
 ## Stack
 

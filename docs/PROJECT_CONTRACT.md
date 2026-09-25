@@ -657,6 +657,24 @@ reranking into one retrieval function; add query classification (roadmap
 
 Enforce roadmap §9's role-based document filtering end-to-end.
 
+#### Interface decisions
+
+* Role→access_level mapping (not a per-chunk `allowed_roles` list as
+  roadmap §9's example JSON sketches): `public` is visible to all four
+  roles; `authorized` is visible to faculty/staff/admin only, not
+  students; `restricted` is visible to no one (defense in depth — it
+  should never reach Qdrant at all per Module 1 AC7). Adding a real
+  per-chunk `allowed_roles` field would mean changing the already-shipped
+  `ChunkRecord` schema from Modules 1-3; the coarser access_level mapping
+  covers the same policy intent without that migration.
+* `hybrid_search`'s new `roles` param filters the fused candidate list
+  before reranking/truncation (`app/retrieval/access_control.py`), so a
+  disallowed chunk can never occupy a `top_k` slot just because it scored
+  higher than a permitted one.
+* A protected `GET /me` endpoint (`app/api/me.py`) was added as the
+  concrete proof for AC4 — the first real usage of `get_current_user`,
+  ahead of Module 5's `/chat` endpoint.
+
 #### Acceptance criteria
 
 1. `backend/app/core/auth.py` — JWT issue/verify with a `role` claim
