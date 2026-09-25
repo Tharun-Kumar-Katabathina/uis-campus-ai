@@ -33,6 +33,33 @@ jobs:
       - name: Test
         run: poetry run pytest -q
 
+  ingestion:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ingestion
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Lint (ruff)
+        run: poetry run ruff check .
+
+      - name: Format check (black)
+        run: poetry run black --check .
+
+      - name: Test
+        run: poetry run pytest -q
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

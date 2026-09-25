@@ -11,13 +11,15 @@ contract this codebase is built against.
 
 ## Status
 
-**Module 0 — Project Foundation.** Frontend and backend scaffolds exist and
-run; no retrieval, LLM, or data pipeline yet.
+**Module 0 — Project Foundation** and **Module 1 — Ingestion Pipeline** are
+complete. No embeddings, vector search, retrieval, or LLM generation yet —
+see `docs/PROJECT_CONTRACT.md` §11 for what's next.
 
 ## Stack
 
 - Frontend: Next.js, TypeScript, Tailwind CSS (`npm`)
 - Backend: Python, FastAPI, Pydantic (`poetry`)
+- Ingestion: Python — extraction, cleaning, chunking, metadata (`poetry`)
 - Data: PostgreSQL, Qdrant, Redis
 - Dev: Docker, GitHub Actions
 
@@ -87,12 +89,26 @@ npm run format:check  # prettier check
 npm run build          # production build
 ```
 
+Ingestion (from `ingestion/`):
+
+```bash
+poetry run pytest -q          # tests
+poetry run ruff check .       # lint
+poetry run black --check .    # format check
+poetry run python -m ingestion.pipeline   # run the pipeline over sample sources
+```
+
+See [`ingestion/README.md`](ingestion/README.md) for what it does and its
+output format.
+
 ## Repository structure
 
 ```text
 frontend/   Next.js UI
 backend/    FastAPI app (api, core, models, services, retrieval,
             generation, verification, tools)
+ingestion/  Extraction, cleaning, chunking, metadata pipeline
+            (sample sources, tests, output/ — see ingestion/README.md)
 docs/       Architecture, roadmap, and the project contract
 .github/    CI workflows
 ```

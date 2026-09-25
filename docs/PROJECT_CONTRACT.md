@@ -485,9 +485,77 @@ GitHub Actions
 
 ---
 
-### MODULE 1+ — Not yet defined
+### MODULE 1 — Ingestion Pipeline (Extraction, Cleaning, Chunking, Metadata)
+
+#### Goal
+
+Build the offline batch pipeline that turns raw source documents into
+cleaned, structure-aware, metadata-tagged chunks. This is separate from the
+live chat request path (roadmap §17) and is what Module 2 (Embedding &
+Vector Search) will consume.
+
+#### Scope
+
+In scope:
+
+* HTML and PDF extraction.
+* Cleaning/normalization (strip boilerplate, preserve headings/lists/URLs).
+* Structure-aware chunking, target ~300–700 tokens, with overlap.
+* Metadata attached to every chunk per roadmap §15's schema.
+* Content-hash based change detection and per-document versioning
+  (roadmap §30) — unchanged sources are skipped on re-run.
+* A small set of **synthetic** UIS-style sample source documents (not
+  live-scraped) so the pipeline and its tests run fully offline. Roadmap
+  §7.6/§34 explicitly sanction synthetic data for this portfolio project;
+  live scraping of uis.edu is deferred to a later "Scheduled Ingestion"
+  module and is out of scope here.
+* Enforcing roadmap §8: the pipeline must refuse to ingest any source
+  manifest entry marked `access_level: restricted`.
+
+Out of scope (later modules): embeddings, vector DB writes, live web
+crawling/scheduling, reranking.
+
+#### Interface decision
+
+`ingestion/` is its own top-level Python package with its own
+`pyproject.toml` (poetry), sibling to `backend/` — it needs HTML/PDF
+parsing libraries the API layer doesn't, and roadmap §46's repo structure
+already treats it as a separate top-level directory.
+
+#### Acceptance criteria
+
+1. `ingestion/` package with extractor, cleaner, chunker, and metadata
+   modules, plus a `pipeline.py` that runs end-to-end over the sample
+   sources via a single command and requires no network access.
+2. At least one HTML extractor and one PDF extractor, each covered by a
+   unit test using local fixture files.
+3. Cleaner strips boilerplate/whitespace while preserving headings, lists,
+   and URLs — covered by a before/after unit test.
+4. Chunker produces chunks within the ~300–700 token target range
+   (approximate tokenization is acceptable and must be documented), with
+   configurable overlap — covered by a unit test with bounds assertions.
+5. Every output chunk carries the full roadmap §15 metadata schema
+   (document_id, chunk_id, title, source, department, document_type, url,
+   published_date, updated_date, effective_date, expiration_date,
+   academic_year, access_level, version) — covered by a schema test.
+6. Change detection: re-running the pipeline on unchanged sources is a
+   no-op (same output, same version); changing one source's content bumps
+   only that document's version and regenerates only its chunks — covered
+   by a test that runs the pipeline twice with a mutated fixture.
+7. A source manifest entry with `access_level: restricted` causes the
+   pipeline to skip that source and record why, not ingest it.
+8. `poetry run pytest`, `poetry run ruff check .`, `poetry run black
+   --check .` all pass inside `ingestion/`.
+9. `ingestion/README.md` (or root README update) documents how to run the
+   pipeline, what the sample data is, and the output format/location.
+10. CI updated with an `ingestion` job running the same lint/format/test
+    commands.
+
+---
+
+### MODULE 2+ — Not yet defined
 
 > Add the remaining modules here (suggested from §1's requirement list:
-> Ingestion, Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM
-> Generation & Citation Verification, Evaluation & Observability, Frontend,
-> Scheduled Ingestion) before starting parallel development per §9.
+> Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM Generation &
+> Citation Verification, Evaluation & Observability, Frontend, Scheduled
+> Ingestion) before starting parallel development per §9.

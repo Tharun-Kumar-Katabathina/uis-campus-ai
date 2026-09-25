@@ -15,5 +15,14 @@ backend/.pytest_cache/
 backend/.ruff_cache/
 *.pyc
 
+# Ingestion
+ingestion/.venv/
+ingestion/__pycache__/
+ingestion/**/__pycache__/
+ingestion/.pytest_cache/
+ingestion/.ruff_cache/
+ingestion/output/*.jsonl
+ingestion/output/state.json
+
 # OS
 .DS_Store
