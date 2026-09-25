@@ -96,7 +96,7 @@ optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 fastapi = ">=0.115,<1.0"
@@ -2344,4 +2344,4 @@ dev = ["black (>=19.3b0) ; python_version >= \"3.6\"", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "a777d3bf575ff259a321bef6794d2025cba3ed4cce4f17172953c685cf46d5d8"
+content-hash = "1723c1816a28a903da19d90f1552dd917294838709ac6fb598b81c6aaa9bad69"

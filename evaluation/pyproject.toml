@@ -4,11 +4,21 @@ version = "0.1.0"
 description = "UIS CampusAI retrieval/generation evaluation harness"
 requires-python = ">=3.11,<4.0"
 dependencies = [
-    "campusai-backend @ file:../backend",
+    "campusai-backend",
 ]
 
 [tool.poetry]
 packages = [{ include = "evaluation" }]
+
+[tool.poetry.dependencies]
+# Poetry's own path-dependency syntax, not a PEP 508 "file:" URL —
+# the latter's relative-path form isn't reliably portable across poetry
+# versions (worked with the locally installed version, broke against
+# whatever `pipx install poetry` resolves in CI: "invalid URL
+# 'file:../backend'"). This form is documented as the correct way to
+# express a path/git dependency's source even when [project] otherwise
+# uses PEP 621 syntax for everything else.
+campusai-backend = { path = "../backend", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.3,<9.0"
