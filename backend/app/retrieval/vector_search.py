@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from typing import Protocol
 
 from pydantic import BaseModel
@@ -8,6 +10,10 @@ from app.core.config import settings
 
 MODEL_NAME = "BAAI/bge-small-en-v1.5"
 COLLECTION_NAME = "campusai_chunks"  # must match ingestion/ingestion/vector_store.py
+# fastembed defaults to a system-tmpdir cache, which doesn't persist across
+# CI runs. Pin it somewhere actions/cache can actually key on (same path
+# ingestion/ingestion/embedder.py uses).
+DEFAULT_CACHE_DIR = str(Path(os.path.expanduser("~")) / ".cache" / "fastembed")
 
 
 class Embedder(Protocol):
@@ -20,10 +26,10 @@ class FastEmbedEmbedder:
     ingestion/ are intentionally separate poetry packages (see
     docs/PROJECT_CONTRACT.md Module 2)."""
 
-    def __init__(self, model_name: str = MODEL_NAME):
+    def __init__(self, model_name: str = MODEL_NAME, cache_dir: str = DEFAULT_CACHE_DIR):
         from fastembed import TextEmbedding
 
-        self._model = TextEmbedding(model_name=model_name)
+        self._model = TextEmbedding(model_name=model_name, cache_dir=cache_dir)
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         return [vector.tolist() for vector in self._model.embed(texts)]
