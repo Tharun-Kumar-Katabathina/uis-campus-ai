@@ -11,11 +11,12 @@ contract this codebase is built against.
 
 ## Status
 
-**Modules 0-5 complete:** Project Foundation, Ingestion Pipeline,
-Embedding & Vector Search, Hybrid Retrieval, RBAC, and LLM Generation &
-Citation Verification. `POST /chat` is a working, role-filtered,
-grounded, cited, source-backed chat endpoint with a working no-answer
-refusal path — end to end, minus a real UI (still the Module 0
+**Modules 0-6 complete:** Project Foundation, Ingestion Pipeline,
+Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM Generation &
+Citation Verification, and Evaluation & Observability. `POST /chat` is a
+working, role-filtered, grounded, cited, source-backed, logged chat
+endpoint, with a CI-gated evaluation harness proving retrieval and
+verification quality on every push — minus a real UI (still the Module 0
 placeholder page) and a locally running LLM to actually call (Ollama
 isn't installed in this dev environment; the endpoint is fully tested
 against a stubbed LLM client). See `docs/PROJECT_CONTRACT.md` §11 for
@@ -26,6 +27,7 @@ what's next.
 - Frontend: Next.js, TypeScript, Tailwind CSS (`npm`)
 - Backend: Python, FastAPI, Pydantic (`poetry`)
 - Ingestion: Python — extraction, cleaning, chunking, metadata (`poetry`)
+- Evaluation: Python — retrieval/generation quality regression gate (`poetry`)
 - Data: PostgreSQL, Qdrant, Redis
 - Dev: Docker, GitHub Actions
 
@@ -111,16 +113,29 @@ poetry run python -m ingestion.pipeline   # run the pipeline over sample sources
 See [`ingestion/README.md`](ingestion/README.md) for what it does and its
 output format.
 
+Evaluation (from `evaluation/`):
+
+```bash
+poetry install                # also installs backend/ as a local dependency
+poetry run python evaluate.py # prints a retrieval/generation quality report
+poetry run pytest -q          # the same evaluation, as CI's regression gate
+```
+
+See [`evaluation/README.md`](evaluation/README.md) for the methodology
+and metric floors.
+
 ## Repository structure
 
 ```text
-frontend/   Next.js UI
-backend/    FastAPI app (api, core, models, services, retrieval,
-            generation, verification, tools)
-ingestion/  Extraction, cleaning, chunking, metadata pipeline
-            (sample sources, tests, output/ — see ingestion/README.md)
-docs/       Architecture, roadmap, and the project contract
-.github/    CI workflows
+frontend/    Next.js UI
+backend/     FastAPI app (api, core, models, retrieval, generation,
+             verification)
+ingestion/   Extraction, cleaning, chunking, metadata, embedding pipeline
+             (sample sources, tests, output/ — see ingestion/README.md)
+evaluation/  Retrieval/generation quality regression gate
+             (see evaluation/README.md)
+docs/        Architecture, roadmap, and the project contract
+.github/     CI workflows
 ```
 
 ## Environment variables

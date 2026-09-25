@@ -72,6 +72,39 @@ jobs:
       - name: Test
         run: poetry run pytest -q
 
+  evaluation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: evaluation
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+
+      - name: Lint (ruff)
+        run: poetry run ruff check .
+
+      - name: Format check (black)
+        run: poetry run black --check .
+
+      - name: Run evaluation (fails the build below the score floor)
+        run: poetry run pytest -q
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

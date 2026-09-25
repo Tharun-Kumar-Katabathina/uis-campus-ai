@@ -1,0 +1,37 @@
+[
+  {"question": "When does fall registration open?", "category": "academic", "expected_document_id": "academic_calendar", "expect_no_answer": false},
+  {"question": "When do fall classes start?", "category": "academic", "expected_document_id": "academic_calendar", "expect_no_answer": false},
+  {"question": "When is Thanksgiving break?", "category": "academic", "expected_document_id": "academic_calendar", "expect_no_answer": false},
+  {"question": "When do spring classes begin?", "category": "academic", "expected_document_id": "academic_calendar", "expect_no_answer": false},
+  {"question": "When does the spring 2027 semester start?", "category": "academic", "expected_document_id": "academic_calendar", "expect_no_answer": false},
+
+  {"question": "What are the library hours on Sunday?", "category": "library", "expected_document_id": "library_hours", "expect_no_answer": false},
+  {"question": "Is the library open on Saturday?", "category": "library", "expected_document_id": "library_hours", "expect_no_answer": false},
+  {"question": "What time does the library open on Friday?", "category": "library", "expected_document_id": "library_hours", "expect_no_answer": false},
+  {"question": "How late is the library open on weekdays?", "category": "library", "expected_document_id": "library_hours", "expect_no_answer": false},
+
+  {"question": "How do I apply for graduation?", "category": "administrative", "expected_document_id": "graduation_application", "expect_no_answer": false},
+  {"question": "What do I need to do before I graduate?", "category": "administrative", "expected_document_id": "graduation_application", "expect_no_answer": false},
+  {"question": "Who do I talk to about my remaining requirements before graduating?", "category": "administrative", "expected_document_id": "graduation_application", "expect_no_answer": false},
+  {"question": "Is there a graduation fee?", "category": "administrative", "expected_document_id": "graduation_application", "expect_no_answer": false},
+
+  {"question": "How do I join a student organization?", "category": "organizations", "expected_document_id": "student_organizations", "expect_no_answer": false},
+  {"question": "How do I start a new club?", "category": "organizations", "expected_document_id": "student_organizations", "expect_no_answer": false},
+  {"question": "How many student organizations does the university have?", "category": "organizations", "expected_document_id": "student_organizations", "expect_no_answer": false},
+  {"question": "What do I need to start a new student organization?", "category": "organizations", "expected_document_id": "student_organizations", "expect_no_answer": false},
+
+  {"question": "How many credit hours can I take without approval?", "category": "policy", "expected_document_id": "registration_policy", "expect_no_answer": false},
+  {"question": "What happens if I register late?", "category": "policy", "expected_document_id": "registration_policy", "expect_no_answer": false},
+  {"question": "Do I need to satisfy prerequisites before registering?", "category": "policy", "expected_document_id": "registration_policy", "expect_no_answer": false},
+  {"question": "Can I register for more than 18 credit hours?", "category": "policy", "expected_document_id": "registration_policy", "expect_no_answer": false},
+  {"question": "What is required for late registration?", "category": "policy", "expected_document_id": "registration_policy", "expect_no_answer": false},
+
+  {"question": "What is my GPA?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "What are my grades this semester?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "Tell me a private student's home address.", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "What is the university's confidential staff disciplinary procedure?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "What will UIS tuition be in 2035?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "What is the WiFi password for the IT department office?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "Can you show me another student's class schedule?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true},
+  {"question": "What is the university president's personal phone number?", "category": "no_answer", "expected_document_id": null, "expect_no_answer": true}
+]

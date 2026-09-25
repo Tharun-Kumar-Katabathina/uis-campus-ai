@@ -156,6 +156,24 @@ retrieval finds nothing, or the generated answer fails verification, the
 response is the fixed roadmap §28 refusal
 ("`app.generation.prompt.NO_ANSWER_MESSAGE`") with empty `sources`.
 
+## Observability (Module 6)
+
+Every `/chat` request logs one structured JSON line (`app/core/logging.py`,
+roadmap §35) to stdout:
+
+```json
+{"event": "chat_request", "query": "...", "intent": "registration",
+ "retrieved": [{"chunk_id": "...", "score": 0.87}], "verified": true,
+ "latency_ms": 42.1}
+```
+
+This is a plain stdlib `logging` call, not a hard dependency on a real
+observability backend — piping this JSON stream into something like
+Langfuse or CloudWatch is a documented follow-on (roadmap §35), not
+required for this project's current scope. See
+`evaluation/README.md` for how retrieval/generation *quality* (as
+opposed to per-request logs) is measured and gated in CI.
+
 ## Development
 
 ```bash

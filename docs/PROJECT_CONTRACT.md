@@ -755,6 +755,34 @@ returning to the user (roadmap §23, §26-28, §33).
 Measurable retrieval/generation quality and structured logging (roadmap
 §35-40).
 
+#### Interface decisions
+
+* `evaluation/` is its own top-level poetry package (matching
+  `ingestion/`/`backend/`'s precedent), depending on `backend/` via a
+  local path dependency (`campusai-backend @ file:../backend`) so it can
+  import `app.retrieval`/`app.verification` directly rather than
+  reimplementing them.
+* Generation-quality metrics (faithfulness, citation correctness,
+  hallucination catch rate, abstention quality) are measured **via the
+  verification layer** (`app/verification/grounding.py`,
+  `app/verification/citations.py`) against synthetically constructed
+  good/bad answers, not a live LLM call — there's no Ollama installed in
+  CI or most dev environments. This measures whether the verification
+  layer correctly passes truthful, evidence-grounded answers and rejects
+  fabricated ones at dataset scale, which is the actual reliability
+  mechanism `POST /chat` depends on — not literally "is the LLM's prose
+  good," which isn't testable without a live model.
+* The dataset (`evaluation/datasets/eval_questions.json`) has 30
+  questions, not the roadmap's aspirational 50-100 (§39) — the sample
+  corpus is only 5 synthetic documents (Module 1), so padding past what
+  those documents can meaningfully support would be duplication, not
+  real coverage. 30 spans every category the corpus supports plus 8
+  genuine no-answer cases; see `evaluation/README.md`.
+* CI regression gate is a pytest file with per-metric floor assertions
+  (`evaluation/tests/test_evaluate.py`), reusing the same
+  `poetry run pytest -q` pattern every other job already uses, rather
+  than a bespoke script-output-parsing CI step.
+
 #### Acceptance criteria
 
 1. `evaluation/datasets/` — eval question set (extends Module 3's set

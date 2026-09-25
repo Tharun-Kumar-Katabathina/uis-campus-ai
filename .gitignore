@@ -24,5 +24,12 @@ ingestion/.ruff_cache/
 ingestion/output/*.jsonl
 ingestion/output/state.json
 
+# Evaluation
+evaluation/.venv/
+evaluation/__pycache__/
+evaluation/**/__pycache__/
+evaluation/.pytest_cache/
+evaluation/.ruff_cache/
+
 # OS
 .DS_Store
