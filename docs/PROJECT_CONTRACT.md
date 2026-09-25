@@ -612,6 +612,22 @@ Combine semantic search with keyword search, metadata filtering, and
 reranking into one retrieval function; add query classification (roadmap
 §10-14, §24-25).
 
+#### Interface decisions
+
+* BM25's corpus is loaded from Qdrant payloads (`load_records_from_qdrant`),
+  not from `ingestion/`'s local `chunks.jsonl` — Qdrant is kept as the
+  single source of truth for chunk content (per Module 2), and `backend/`
+  stays independent of the `ingestion/` package.
+* Reranking uses a documented scoring combination (RRF score boosted by
+  query/title word overlap), not a cross-encoder — avoids another model
+  download for a corpus this small, per the acceptance criterion's own
+  "otherwise a documented scoring combination" allowance.
+* Same network exception as Module 2: BM25/RRF/reranker/classifier unit
+  tests are network-free, but the one Recall@K/MRR quality benchmark test
+  uses the real embedding model (already required and cached by Module 2)
+  — "no network required" below refers to that unit-test majority, not
+  the single quality benchmark.
+
 #### Acceptance criteria
 
 1. `backend/app/retrieval/keyword_search.py` — BM25 over chunk content
@@ -628,7 +644,9 @@ reranking into one retrieval function; add query classification (roadmap
 5. Retrieval quality measured with Recall@K/MRR against a small
    hand-labeled query→expected-chunk set built from Module 1's sample
    sources — a test asserts a minimum threshold.
-6. Tests, lint, format pass with no network required.
+6. Unit tests (BM25, RRF, reranker, classifier), lint, format pass with no
+   network required; see the interface decision above for the one
+   quality-benchmark exception.
 7. README documents the retrieval architecture and how to evaluate it.
 
 ---

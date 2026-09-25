@@ -11,10 +11,12 @@ contract this codebase is built against.
 
 ## Status
 
-**Modules 0-2 complete:** Project Foundation, Ingestion Pipeline, and
-Embedding & Vector Search. Chunks can be embedded and semantically
-searched, but there's no hybrid (keyword+rerank) retrieval, RBAC, or LLM
-generation/chat yet — see `docs/PROJECT_CONTRACT.md` §11 for what's next.
+**Modules 0-3 complete:** Project Foundation, Ingestion Pipeline,
+Embedding & Vector Search, and Hybrid Retrieval. Queries get classified,
+searched (semantic + BM25 keyword, fused and reranked), and evaluated for
+retrieval quality — but there's no RBAC or LLM generation/chat yet, so
+nothing is exposed over an API endpoint. See `docs/PROJECT_CONTRACT.md`
+§11 for what's next.
 
 ## Stack
 
@@ -81,6 +83,10 @@ poetry run pytest      # tests
 poetry run ruff check . # lint
 poetry run black --check . # format check
 ```
+
+See [`backend/README.md`](backend/README.md) for the retrieval
+architecture (hybrid search, reranking, query classification) and how to
+run the retrieval-quality benchmark.
 
 Frontend (from `frontend/`):
 
