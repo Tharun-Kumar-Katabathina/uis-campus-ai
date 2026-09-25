@@ -115,7 +115,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # jsdom 30's bundled undici needs webidl internals not present
+          # in Node 20 ("webidl.util.markAsUncloneable is not a
+          # function", surfaced by `npm run test` in CI) — Node 22+ has
+          # them.
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
