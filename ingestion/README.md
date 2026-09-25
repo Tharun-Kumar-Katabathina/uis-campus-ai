@@ -12,6 +12,8 @@ Raw source (HTML/PDF)
   -> chunker            (ingestion/chunkers)
   -> metadata attach   (ingestion/metadata)
   -> output/chunks.jsonl + output/state.json
+  -> embed + index     (ingestion/embedder.py, ingestion/index.py)
+  -> Qdrant collection "campusai_chunks"
 ```
 
 ## Sample data
@@ -45,6 +47,37 @@ To add a new source: add a raw file under `sources/raw/` and an entry to
 `sources/manifest.json` with its metadata (see
 `ingestion.metadata.SourceManifestEntry` for the required fields).
 
+## Embedding & vector search (Module 2)
+
+```bash
+# 1. produce output/chunks.jsonl (see above)
+poetry run python -m ingestion.pipeline
+
+# 2. embed + index into Qdrant
+poetry run python -m ingestion.index
+```
+
+By default `ingestion.index` indexes into an **in-memory** Qdrant instance
+(nothing persists — useful for a quick local check). To index into the
+real Qdrant service from `docker-compose.yml`, set `QDRANT_URL`:
+
+```bash
+QDRANT_URL=http://localhost:6333 poetry run python -m ingestion.index
+```
+
+- **Embedding model:** `BAAI/bge-small-en-v1.5` (384-dim) via
+  [fastembed](https://github.com/qdrant/fastembed) — real local semantic
+  embeddings, ONNX runtime, no torch dependency. Weights download from
+  Hugging Face on first use (see "Notes on implementation choices" below).
+- **Collection:** `campusai_chunks`, cosine distance. Point IDs are a
+  deterministic UUID5 of `chunk_id`, so re-indexing is idempotent —
+  upserts overwrite rather than duplicate.
+- **Querying:** the live query-time search function is
+  `app.retrieval.vector_search.semantic_search()` in the backend (not
+  here) — it embeds the query with the same model and searches this same
+  collection, optionally filtered by metadata (e.g. `document_type`,
+  `access_level`).
+
 ## Development
 
 ```bash
@@ -63,3 +96,11 @@ poetry run black --check .    # format check
   field: a document's version only advances when its cleaned content's hash
   changes between runs; the manifest's `version` is just the starting value
   for a brand-new document.
+- **Embedding library is fastembed, not raw sentence-transformers**: it
+  avoids a torch dependency, ships native Qdrant integration, and is
+  meaningfully lighter/faster to install — see
+  `docs/PROJECT_CONTRACT.md` Module 2 for the full reasoning.
+- **Tests use Qdrant's in-memory mode** (`QdrantClient(location=":memory:")`),
+  not a live service — no Docker/network needed to run the suite, except
+  the one real-embedding integration test, which needs network on first
+  run to download model weights (cached afterward).

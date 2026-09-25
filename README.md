@@ -11,9 +11,10 @@ contract this codebase is built against.
 
 ## Status
 
-**Module 0 — Project Foundation** and **Module 1 — Ingestion Pipeline** are
-complete. No embeddings, vector search, retrieval, or LLM generation yet —
-see `docs/PROJECT_CONTRACT.md` §11 for what's next.
+**Modules 0-2 complete:** Project Foundation, Ingestion Pipeline, and
+Embedding & Vector Search. Chunks can be embedded and semantically
+searched, but there's no hybrid (keyword+rerank) retrieval, RBAC, or LLM
+generation/chat yet — see `docs/PROJECT_CONTRACT.md` §11 for what's next.
 
 ## Stack
 

@@ -51,6 +51,12 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: fastembed-bge-small-en-v1.5
+
       - name: Lint (ruff)
         run: poetry run ruff check .
 
