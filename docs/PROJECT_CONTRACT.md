@@ -816,6 +816,14 @@ Replace Module 0's placeholder page with the real chat UI (roadmap
   credentials. Clearly documented in its own docstring as a portfolio-only
   mechanism, never a pattern for real deployment. The frontend's
   `RoleSelector` calls it instead of a real sign-in form.
+* **Security fix (post-hoc, via `/security-review`)**: as originally
+  shipped, `/auth/demo-login` had no gate at all — an unauthenticated
+  caller could request `role: "admin"` and get a valid token, bypassing
+  Module 4's RBAC entirely. Fixed by returning 404 unless
+  `APP_ENV=development` (the default locally/in CI); a real deployment
+  must explicitly set `APP_ENV` to something else to disable this
+  endpoint. Covered by
+  `backend/tests/test_auth_demo_login.py::test_demo_login_disabled_outside_development`.
 * `POST /feedback` (`backend/app/api/feedback.py`) has no persistence
   layer to write to (no Postgres/ORM module exists) — it records
   feedback as a structured log event, the same mechanism Module 6 uses

@@ -107,6 +107,13 @@ exist (no registration/login module is in scope) — this mints a token
 for a fixed demo user of the given role. See its docstring in
 `app/api/auth.py`; never use this pattern for a real deployment.
 
+**Security:** since this endpoint hands out a valid token for any
+requested role with no authentication at all, it only responds when
+`APP_ENV=development` (the default) and returns 404 otherwise — set
+`APP_ENV` to anything else in a real deployment to disable it. This was
+flagged by a `/security-review` pass and fixed; see
+`docs/PROJECT_CONTRACT.md` Module 7's interface decisions.
+
 ## Generation & verification (Module 5)
 
 ```text
