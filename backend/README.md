@@ -101,6 +101,61 @@ refuses to sign with an empty key) rather than silently signing tokens
 with a weak fallback. Set a real value (32+ bytes recommended) in `.env`
 for local/dev use; tests set their own via `tests/conftest.py`.
 
+## Generation & verification (Module 5)
+
+```text
+POST /chat
+     |
+     v
+query_classifier.classify()            (intent, for the response only)
+     |
+     v
+hybrid_search(..., roles=[user.role])  (Module 3 + 4 — role-filtered evidence)
+     |
+     +-- no evidence? --> refuse (roadmap §28), skip the LLM call entirely
+     |
+     v
+prompt.build_user_prompt()             (numbered, fenced, labeled-untrusted evidence)
+     |
+     v
+llm_client.generate(SYSTEM_PROMPT, user_prompt)
+     |
+     v
+verification.grounding.verify_answer()  (citations real? cited? lexically grounded?)
+     |
+     +-- FAIL --> refuse (roadmap §28), drop any sources
+     |
+     v
+citations.citations_to_sources()  --> ChatResponse{answer, sources, verified, intent}
+```
+
+- `app/generation/llm_client.py` — `LLMClient` protocol; `OllamaLLMClient`
+  is the only implemented provider (`LLM_PROVIDER=local`). Requires a
+  local Ollama server (`ollama serve`, with a model pulled, e.g. `ollama
+  pull llama3.2`) — not exercised by the test suite, which stubs the LLM
+  client entirely (`tests/fake_llm_client.py`), so `poetry run pytest`
+  needs no Ollama installation.
+- `app/generation/prompt.py` — `SYSTEM_PROMPT` (static, roadmap §23's
+  grounding rules + §33's prompt-injection defense) and
+  `build_user_prompt()` (numbered evidence blocks, fenced and labeled
+  untrusted).
+- `app/verification/citations.py` — parses `[n]` citations, rejects any
+  index that doesn't correspond to real evidence.
+- `app/verification/grounding.py` — `verify_answer()`: a refusal is
+  always valid; otherwise the answer must cite only real evidence,
+  cite at least one source, and have ≥30% word overlap with the evidence
+  it cited. This is a deterministic lexical check, not a second LLM
+  call — see `docs/PROJECT_CONTRACT.md` Module 5 for why.
+- `app/api/chat.py` — `POST /chat`. Request: `{"message": str,
+  "conversation_id": str | None}`. Response: `{"answer": str, "sources":
+  [{"title", "url", "relevance"}], "verified": bool, "intent": str}` —
+  matches roadmap §45.
+
+No answer is ever returned without going through verification: if
+retrieval finds nothing, or the generated answer fails verification, the
+response is the fixed roadmap §28 refusal
+("`app.generation.prompt.NO_ANSWER_MESSAGE`") with empty `sources`.
+
 ## Development
 
 ```bash

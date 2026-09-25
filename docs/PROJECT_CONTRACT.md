@@ -698,6 +698,31 @@ Enforce roadmap §9's role-based document filtering end-to-end.
 Wire retrieval into an LLM for grounded, cited answers, verified before
 returning to the user (roadmap §23, §26-28, §33).
 
+#### Interface decisions
+
+* Only `LLM_PROVIDER=local` (Ollama) is actually implemented behind the
+  `LLMClient` interface; an unsupported provider raises `NotImplementedError`
+  with a clear message rather than silently no-op'ing. No Ollama
+  installation exists in this dev environment, so it's untested by the
+  suite — README documents the manual setup.
+* Grounding verification (`app/verification/grounding.py`) is a
+  **deterministic lexical-overlap check** (cited evidence vs. answer word
+  overlap ≥ 0.3), not an LLM-judge — avoids a second model call/cost for
+  every response and keeps verification itself deterministic and
+  network-free to test. It's a real, non-trivial check: manually proven
+  against live Qdrant retrieval to both accept a genuinely grounded
+  answer and reject a fabricated one that cited a real evidence index but
+  stated a date that evidence didn't contain.
+* The response `Source` model matches roadmap §45's shape exactly
+  (`title`, `url`, `relevance`) — internal fields like `chunk_id` are not
+  exposed in the API response.
+* The prompt-injection test (AC6) verifies the *structural* half of the
+  defense — that the static `SYSTEM_PROMPT` constant can never be altered
+  by retrieved content, and that such content is confined to a clearly
+  labeled untrusted evidence block. Whether a real LLM actually honors
+  that separation isn't testable without a live model call, so that part
+  is out of scope for the automated suite.
+
 #### Acceptance criteria
 
 1. `backend/app/generation/llm_client.py` — provider-abstracted LLM

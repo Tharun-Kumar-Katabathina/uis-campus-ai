@@ -11,11 +11,15 @@ contract this codebase is built against.
 
 ## Status
 
-**Modules 0-4 complete:** Project Foundation, Ingestion Pipeline,
-Embedding & Vector Search, Hybrid Retrieval, and RBAC. Retrieval is
-role-filtered end-to-end and JWT auth protects a first route (`GET
-/me`) — but there's no LLM generation/chat endpoint yet. See
-`docs/PROJECT_CONTRACT.md` §11 for what's next.
+**Modules 0-5 complete:** Project Foundation, Ingestion Pipeline,
+Embedding & Vector Search, Hybrid Retrieval, RBAC, and LLM Generation &
+Citation Verification. `POST /chat` is a working, role-filtered,
+grounded, cited, source-backed chat endpoint with a working no-answer
+refusal path — end to end, minus a real UI (still the Module 0
+placeholder page) and a locally running LLM to actually call (Ollama
+isn't installed in this dev environment; the endpoint is fully tested
+against a stubbed LLM client). See `docs/PROJECT_CONTRACT.md` §11 for
+what's next.
 
 ## Stack
 
