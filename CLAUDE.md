@@ -1,5 +1,14 @@
 # CLAUDE.md — UIS CampusAI
 
+## Session start checklist
+Before anything else, check whether a memory note about in-progress work
+exists for this project (e.g. `deployment_in_progress.md`). If one does,
+surface it proactively in your very first reply this session — don't wait
+to be asked "where did we leave off". State what's pending and what you
+need from me to continue. Once that pending item is resolved (e.g.
+deployment finishes or the plan changes), delete/update the memory note so
+this stops firing.
+
 ## Context
 Read `docs/PROJECT_CONTRACT.md` in full before doing anything else this
 session. It's the shared source of truth for architecture, stack, and module
