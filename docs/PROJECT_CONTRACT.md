@@ -869,6 +869,28 @@ Replace Module 0's placeholder page with the real chat UI (roadmap
 Turn Module 1's manual pipeline into a recurring, automated job (roadmap
 §31).
 
+#### Interface decisions
+
+* The workflow (`.github/workflows/scheduled-ingestion.yml`) runs
+  against a **GitHub Actions service container** running real Qdrant
+  (`services: qdrant:`), not a persistent hosted instance — this project
+  has no deployed production Qdrant to point at. The workflow's
+  mechanism (schedule trigger, real pipeline run, real embed+index into
+  a real running Qdrant, visible failure) is fully real and was actually
+  triggered and verified (see below); pointing `QDRANT_URL` at a
+  persistent deployment instead is a config change (a repo secret) once
+  one exists, not a code change.
+* Failure visibility (AC2) isn't left to "a step exited non-zero" alone:
+  an explicit verification step queries Qdrant's point count after
+  indexing and fails the job with an `::error::` annotation if it's
+  zero — catching a silent failure (e.g. an empty/malformed manifest)
+  that would otherwise leave every step green.
+* AC3 was verified by actually dispatching the workflow twice via
+  `gh workflow run` / `gh run watch`, not just written and left untested:
+  both runs succeeded with the same final point count (5), demonstrating
+  idempotent upsert (Module 2's UUID5-of-chunk_id point IDs) holds across
+  separate real workflow invocations, not just in unit tests.
+
 #### Acceptance criteria
 
 1. A scheduled GitHub Actions workflow runs ingestion (Module 1) +

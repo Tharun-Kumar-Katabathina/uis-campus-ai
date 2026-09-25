@@ -11,16 +11,17 @@ contract this codebase is built against.
 
 ## Status
 
-**Modules 0-7 complete:** Project Foundation, Ingestion Pipeline,
-Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM Generation &
-Citation Verification, Evaluation & Observability, and the Frontend Chat
-UI. There's a real, working chat interface — pick a role, ask a
-question, get a grounded/cited/role-filtered answer with sources and
-feedback buttons — backed by a CI-gated evaluation harness. Verified
+**All 9 modules (0-8) complete.** Project Foundation, Ingestion
+Pipeline, Embedding & Vector Search, Hybrid Retrieval, RBAC, LLM
+Generation & Citation Verification, Evaluation & Observability, the
+Frontend Chat UI, and Scheduled Ingestion. There's a real, working chat
+interface — pick a role, ask a question, get a grounded/cited/
+role-filtered answer with sources and feedback buttons — backed by a
+CI-gated evaluation harness and a scheduled ingestion workflow. Verified
 end-to-end in a real browser against a real local LLM (Ollama +
-llama3.2, not installed by default — see `frontend/README.md`). Only
-Scheduled Ingestion (turning the manual pipeline into a recurring job) is
-left — see `docs/PROJECT_CONTRACT.md` §11.
+llama3.2, not installed by default — see `frontend/README.md`). See
+`docs/PROJECT_CONTRACT.md` for the full module-by-module contract and
+every interface decision made along the way.
 
 ## Stack
 
@@ -142,7 +143,7 @@ ingestion/   Extraction, cleaning, chunking, metadata, embedding pipeline
 evaluation/  Retrieval/generation quality regression gate
              (see evaluation/README.md)
 docs/        Architecture, roadmap, and the project contract
-.github/     CI workflows
+.github/     CI workflows + scheduled ingestion (see ingestion/README.md)
 ```
 
 ## Environment variables

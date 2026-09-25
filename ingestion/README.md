@@ -86,6 +86,30 @@ poetry run ruff check .       # lint
 poetry run black --check .    # format check
 ```
 
+## Scheduled ingestion (Module 8)
+
+`.github/workflows/scheduled-ingestion.yml` runs the full pipeline —
+extract → clean → chunk → metadata → embed → index — automatically:
+
+- **Schedule**: every Monday at 06:00 UTC (`cron: "0 6 * * 1"`).
+- **Manual trigger**: from the GitHub UI (Actions → Scheduled Ingestion →
+  Run workflow), or via the CLI:
+  ```bash
+  gh workflow run scheduled-ingestion.yml
+  gh run watch   # follow the run that was just triggered
+  ```
+- **Where it indexes to**: a real Qdrant instance run as a GitHub Actions
+  service container for the duration of the job — this project has no
+  persistent hosted Qdrant deployment to point at yet. Pointing
+  `QDRANT_URL` at a real deployment instead (once one exists) is a config
+  change, not a code change.
+- **Failure visibility**: every step's exit code fails the job as usual,
+  plus an explicit step queries the indexed point count afterward and
+  fails with an `::error::` annotation if it's zero — so a silent
+  failure upstream (e.g. an empty manifest) still shows up as a failed,
+  clearly-annotated run rather than a deceptively "green" one with no
+  data indexed.
+
 ## Notes on implementation choices
 
 - **Chunk sizing uses an approximate tokenizer** (`ingestion/chunkers/chunker.py`,

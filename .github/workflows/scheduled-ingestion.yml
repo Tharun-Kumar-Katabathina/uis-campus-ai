@@ -1,0 +1,71 @@
+name: Scheduled Ingestion
+
+on:
+  schedule:
+    # Every Monday 06:00 UTC (roadmap §31). Real deployments would tune
+    # frequency per source; weekly is a reasonable default for this
+    # project's small, slow-changing sample corpus.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ingestion
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/fastembed
+          key: fastembed-bge-small-en-v1.5
+
+      - name: Wait for Qdrant
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:6333/collections > /dev/null; then
+              echo "Qdrant is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Qdrant never became reachable"
+          exit 1
+
+      - name: Run ingestion pipeline (extract, clean, chunk, metadata)
+        run: poetry run python -m ingestion.pipeline
+
+      - name: Embed and index into Qdrant
+        run: QDRANT_URL=http://localhost:6333 poetry run python -m ingestion.index
+
+      - name: Verify chunks were actually indexed
+        # A silent failure (e.g. an empty manifest, a swallowed exception
+        # upstream) would leave every prior step green with zero points
+        # indexed — check for that explicitly rather than trusting exit
+        # codes alone (roadmap §31's "Send failure alert").
+        run: |
+          count=$(curl -s http://localhost:6333/collections/campusai_chunks \
+            | python3 -c "import sys, json; print(json.load(sys.stdin)['result']['points_count'])")
+          echo "Indexed points: $count"
+          if [ "$count" -lt 1 ]; then
+            echo "::error::No points were indexed — ingestion may have failed silently"
+            exit 1
+          fi
