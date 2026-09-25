@@ -95,7 +95,8 @@ print(create_access_token('demo-user', Role.STAFF))
 list against this table before reranking, so a higher-scoring disallowed
 chunk can never push out a permitted one.
 
-`JWT_SECRET` has no default — an unset/empty secret fails loudly (PyJWT
+`JWT_SECRET` defaults to an empty string, not a usable fallback — an
+unset/empty secret fails loudly (PyJWT
 refuses to sign with an empty key) rather than silently signing tokens
 with a weak fallback. Set a real value (32+ bytes recommended) in `.env`
 for local/dev use; tests set their own via `tests/conftest.py`.

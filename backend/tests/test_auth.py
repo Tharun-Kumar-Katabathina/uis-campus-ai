@@ -41,3 +41,17 @@ def test_decode_rejects_unrecognized_role():
 
     with pytest.raises(ValueError):
         decode_access_token(token)
+
+
+def test_empty_jwt_secret_fails_loudly_instead_of_signing():
+    """app/core/config.py's jwt_secret defaults to "" — confirms that
+    default can never silently produce a working (insecure) token; the
+    autouse fixture in conftest.py overrides it for every other test, so
+    this one restores "" for just this assertion."""
+    original = settings.jwt_secret
+    settings.jwt_secret = ""
+    try:
+        with pytest.raises(jwt.InvalidKeyError):
+            create_access_token("user-1", Role.STUDENT)
+    finally:
+        settings.jwt_secret = original
